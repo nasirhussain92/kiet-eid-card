@@ -167,18 +167,18 @@
                 nameFontSize--;
                 ctx.font = `bold ${nameFontSize}px Arial`;
             }
-            // Position Name - Adjust the 0.81 multiplier if it's too high/low
-            ctx.fillText(name, canvas.width / 2, canvas.height * 0.81); 
+            // Position Name remains at 0.85
+            ctx.fillText(name, canvas.width / 2, canvas.height * 0.85); 
 
             // Auto-scaling logic for Designation
             let desigFontSize = 32;
-            ctx.font = `${desigFontSize}px Arial`;
+            ctx.font = `bold ${desigFontSize}px Arial`; 
             while (ctx.measureText(designation).width > canvas.width - 80 && desigFontSize > 16) {
                 desigFontSize--;
-                ctx.font = `${desigFontSize}px Arial`;
+                ctx.font = `bold ${desigFontSize}px Arial`;
             }
-            // Position Designation - Adjust the 0.85 multiplier if it's too high/low
-            ctx.fillText(designation, canvas.width / 2, canvas.height * 0.85); 
+            // Adjusted from 0.89 to 0.88 to reduce line spacing
+            ctx.fillText(designation, canvas.width / 2, canvas.height * 0.88); 
 
             canvasContainer.style.display = 'block';
             
