@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIET Eid Greeting Generator</title>
+    <style>
+        :root {
+            --kiet-blue: #003366;
+            --kiet-cyan: #00AEEF;
+            --kiet-orange: #F58220;
+            --kiet-orange-hover: #e06d10;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            color: var(--kiet-blue);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 15px;
+            margin: 0;
+        }
+        .header-logo {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 51, 102, 0.1);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            border-top: 5px solid var(--kiet-orange);
+        }
+        h2 {
+            color: var(--kiet-blue);
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--kiet-blue);
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--kiet-cyan);
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #previewBtn {
+            background-color: var(--kiet-cyan);
+            color: white;
+        }
+        #previewBtn:hover {
+            background-color: #0098d1;
+        }
+        #downloadBtn {
+            background-color: var(--kiet-orange);
+            color: white;
+        }
+        #downloadBtn:hover {
+            background-color: var(--kiet-orange-hover);
+        }
+        .canvas-container {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 450px;
+            display: none; /* Hidden until preview */
+        }
+        canvas {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Create Your Eid Card</h2>
+        
+        <div class="form-group">
+            <label for="empName">Full Name</label>
+            <input type="text" id="empName" placeholder="e.g. Nasir Hussain">
+        </div>
+        
+        <div class="form-group">
+            <label for="empDesignation">Designation</label>
+            <input type="text" id="empDesignation" placeholder="e.g. Assistant Registrar">
+        </div>
+
+        <div class="button-group">
+            <button id="previewBtn">Preview</button>
+            <button id="downloadBtn">Download</button>
+        </div>
+    </div>
+
+    <div class="canvas-container" id="canvasContainer">
+        <canvas id="eidCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('eidCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const img = new Image();
+        
+        // Load the blank template
+        img.src = 'template.jpg'; 
+
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+        };
+
+        function drawImageAndText() {
+            if (!img.complete || img.naturalWidth === 0) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+
+            const name = document.getElementById('empName').value.trim() || 'Your Name';
+            const designation = document.getElementById('empDesignation').value.trim() || 'Your Designation';
+
+            ctx.fillStyle = '#ffffff'; 
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Auto-scaling logic for Name
+            let nameFontSize = 45;
+            ctx.font = `bold ${nameFontSize}px Arial`;
+            while (ctx.measureText(name).width > canvas.width - 80 && nameFontSize > 20) {
+                nameFontSize--;
+                ctx.font = `bold ${nameFontSize}px Arial`;
+            }
+            // Position Name - Adjust the 0.81 multiplier if it's too high/low
+            ctx.fillText(name, canvas.width / 2, canvas.height * 0.81); 
+
+            // Auto-scaling logic for Designation
+            let desigFontSize = 32;
+            ctx.font = `${desigFontSize}px Arial`;
+            while (ctx.measureText(designation).width > canvas.width - 80 && desigFontSize > 16) {
+                desigFontSize--;
+                ctx.font = `${desigFontSize}px Arial`;
+            }
+            // Position Designation - Adjust the 0.85 multiplier if it's too high/low
+            ctx.fillText(designation, canvas.width / 2, canvas.height * 0.85); 
+
+            canvasContainer.style.display = 'block';
+            
+            // Scroll down slightly so mobile users see the preview
+            canvasContainer.scrollIntoView({ behavior: "smooth" });
+        }
+
+        document.getElementById('previewBtn').addEventListener('click', drawImageAndText);
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            drawImageAndText(); 
+            const link = document.createElement('a');
+            link.download = 'KIET_Eid_Greeting.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+        });
+    </script>
+</body>
+  </html>
+  
