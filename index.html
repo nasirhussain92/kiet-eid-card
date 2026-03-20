@@ -133,7 +133,7 @@
         <canvas id="eidCanvas"></canvas>
     </div>
 
-    <script>
+<script>
         const canvas = document.getElementById('eidCanvas');
         const ctx = canvas.getContext('2d');
         const canvasContainer = document.getElementById('canvasContainer');
@@ -146,6 +146,18 @@
             canvas.width = img.width;
             canvas.height = img.height;
         };
+
+        // --- GOOGLE SHEETS LOGGING SETUP ---
+        const sheetURL = "https://script.google.com/macros/s/AKfycbzYuV_MjqYnIrvqWkV1MUubEQIR0R2CREwUXE8YMD3BWIPiSpg6w4gTKkXwugVysZGs/exec"; 
+
+        function logActivity(actionType) {
+            const name = document.getElementById('empName').value.trim() || 'Empty';
+            const designation = document.getElementById('empDesignation').value.trim() || 'Empty';
+            
+            // Send the data silently
+            const trackingLink = `${sheetURL}?name=${encodeURIComponent(name)}&designation=${encodeURIComponent(designation)}&action=${actionType}`;
+            fetch(trackingLink, { mode: 'no-cors' }).catch(err => console.log("Logging error:", err));
+        }
 
         function drawImageAndText() {
             if (!img.complete || img.naturalWidth === 0) return;
@@ -167,7 +179,7 @@
                 nameFontSize--;
                 ctx.font = `bold ${nameFontSize}px Arial`;
             }
-            // Position Name remains at 0.85
+            // Position Name
             ctx.fillText(name, canvas.width / 2, canvas.height * 0.85); 
 
             // Auto-scaling logic for Designation
@@ -177,7 +189,7 @@
                 desigFontSize--;
                 ctx.font = `bold ${desigFontSize}px Arial`;
             }
-            // Adjusted from 0.89 to 0.88 to reduce line spacing
+            // Position Designation 
             ctx.fillText(designation, canvas.width / 2, canvas.height * 0.88); 
 
             canvasContainer.style.display = 'block';
@@ -186,10 +198,19 @@
             canvasContainer.scrollIntoView({ behavior: "smooth" });
         }
 
-        document.getElementById('previewBtn').addEventListener('click', drawImageAndText);
+        // --- EVENT LISTENERS ---
 
+        // Preview Button
+        document.getElementById('previewBtn').addEventListener('click', () => {
+            logActivity('Preview'); 
+            drawImageAndText();     
+        });
+
+        // Download Button
         document.getElementById('downloadBtn').addEventListener('click', () => {
-            drawImageAndText(); 
+            logActivity('Download'); 
+            drawImageAndText();      
+            
             const link = document.createElement('a');
             link.download = 'KIET_Eid_Greeting.jpg';
             link.href = canvas.toDataURL('image/jpeg', 0.95);
