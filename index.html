@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KIET Eid Greeting Generator</title>
+    <title>KIET Eid ul Adha Greeting Generator</title>
     <style>
         :root {
             --kiet-blue: #003366;
             --kiet-cyan: #00AEEF;
             --kiet-orange: #F58220;
-            --kiet-orange-hover: #e06d10;
+            --kiet-golden: #dca654;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -21,10 +21,6 @@
             padding: 30px 15px;
             margin: 0;
         }
-        .header-logo {
-            margin-bottom: 20px;
-            text-align: center;
-        }
         .container {
             background-color: #ffffff;
             padding: 40px;
@@ -33,7 +29,7 @@
             max-width: 450px;
             width: 100%;
             text-align: center;
-            border-top: 5px solid var(--kiet-orange);
+            border-top: 5px solid var(--kiet-golden);
         }
         h2 {
             color: var(--kiet-blue);
@@ -63,11 +59,11 @@
         }
         input[type="text"]:focus {
             outline: none;
-            border-color: var(--kiet-cyan);
+            border-color: var(--kiet-golden);
         }
         .button-group {
             display: flex;
-            gap: 15px;
+            gap: 10px;
             margin-top: 30px;
         }
         button {
@@ -76,29 +72,25 @@
             border: none;
             border-radius: 6px;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 15px;
             cursor: pointer;
             transition: all 0.3s ease;
-        }
-        #previewBtn {
-            background-color: var(--kiet-cyan);
             color: white;
         }
-        #previewBtn:hover {
-            background-color: #0098d1;
-        }
-        #downloadBtn {
-            background-color: var(--kiet-orange);
-            color: white;
-        }
-        #downloadBtn:hover {
-            background-color: var(--kiet-orange-hover);
-        }
+        #previewBtn { background-color: var(--kiet-blue); }
+        #previewBtn:hover { background-color: #002244; }
+        
+        #downloadBtn { background-color: var(--kiet-orange); }
+        #downloadBtn:hover { background-color: #e06d10; }
+        
+        #shareBtn { background-color: #25D366; display: none; } /* Hidden by default, shown if supported */
+        #shareBtn:hover { background-color: #1ebc5a; }
+
         .canvas-container {
             margin-top: 30px;
             width: 100%;
             max-width: 450px;
-            display: none; /* Hidden until preview */
+            display: none;
         }
         canvas {
             width: 100%;
@@ -111,21 +103,22 @@
 <body>
 
     <div class="container">
-        <h2>Create Your Eid Card</h2>
+        <h2>Create Your Eid ul Adha Card</h2>
         
         <div class="form-group">
             <label for="empName">Full Name</label>
-            <input type="text" id="empName" placeholder="e.g. Nasir Hussain">
+            <input type="text" id="empName" placeholder="e.g. Muhammad Nasir Butt">
         </div>
         
         <div class="form-group">
             <label for="empDesignation">Designation</label>
-            <input type="text" id="empDesignation" placeholder="e.g. Assistant Registrar">
+            <input type="text" id="empDesignation" placeholder="e.g. Chancellor, KIET">
         </div>
 
         <div class="button-group">
             <button id="previewBtn">Preview</button>
             <button id="downloadBtn">Download</button>
+            <button id="shareBtn">Share</button>
         </div>
     </div>
 
@@ -133,13 +126,14 @@
         <canvas id="eidCanvas"></canvas>
     </div>
 
-<script>
+    <script>
         const canvas = document.getElementById('eidCanvas');
         const ctx = canvas.getContext('2d');
         const canvasContainer = document.getElementById('canvasContainer');
+        const shareBtn = document.getElementById('shareBtn');
         const img = new Image();
         
-        // Load the blank template
+        // Load the new blank Eid ul Adha template
         img.src = 'template.jpg'; 
 
         img.onload = () => {
@@ -154,9 +148,13 @@
             const name = document.getElementById('empName').value.trim() || 'Empty';
             const designation = document.getElementById('empDesignation').value.trim() || 'Empty';
             
-            // Send the data silently
             const trackingLink = `${sheetURL}?name=${encodeURIComponent(name)}&designation=${encodeURIComponent(designation)}&action=${actionType}`;
             fetch(trackingLink, { mode: 'no-cors' }).catch(err => console.log("Logging error:", err));
+        }
+
+        // Show Share button only if the user's browser/device supports it
+        if (navigator.canShare && navigator.canShare({ files: [] })) {
+            shareBtn.style.display = 'block';
         }
 
         function drawImageAndText() {
@@ -168,55 +166,68 @@
             const name = document.getElementById('empName').value.trim() || 'Your Name';
             const designation = document.getElementById('empDesignation').value.trim() || 'Your Designation';
 
-            ctx.fillStyle = '#ffffff'; 
+            // Golden color to match the design
+            ctx.fillStyle = '#dca654'; 
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            // Auto-scaling logic for Name
-            let nameFontSize = 45;
-            ctx.font = `bold ${nameFontSize}px Arial`;
-            while (ctx.measureText(name).width > canvas.width - 80 && nameFontSize > 20) {
+            // Elegant Serif Font for Name
+            let nameFontSize = 52;
+            ctx.font = `${nameFontSize}px "Georgia", "Times New Roman", serif`;
+            while (ctx.measureText(name).width > canvas.width - 80 && nameFontSize > 25) {
                 nameFontSize--;
-                ctx.font = `bold ${nameFontSize}px Arial`;
+                ctx.font = `${nameFontSize}px "Georgia", "Times New Roman", serif`;
             }
-            // Position Name
-            ctx.fillText(name, canvas.width / 2, canvas.height * 0.85); 
+            // Positioned higher up to match the Chancellor sample
+            ctx.fillText(name, canvas.width / 2, canvas.height * 0.67); 
 
-            // Auto-scaling logic for Designation
-            let desigFontSize = 32;
-            ctx.font = `bold ${desigFontSize}px Arial`; 
-            while (ctx.measureText(designation).width > canvas.width - 80 && desigFontSize > 16) {
+            // Elegant Serif Font for Designation
+            let desigFontSize = 40;
+            ctx.font = `${desigFontSize}px "Georgia", "Times New Roman", serif`; 
+            while (ctx.measureText(designation).width > canvas.width - 80 && desigFontSize > 20) {
                 desigFontSize--;
-                ctx.font = `bold ${desigFontSize}px Arial`;
+                ctx.font = `${desigFontSize}px "Georgia", "Times New Roman", serif`;
             }
-            // Position Designation 
-            ctx.fillText(designation, canvas.width / 2, canvas.height * 0.88); 
+            // Positioned just below the name
+            ctx.fillText(designation, canvas.width / 2, canvas.height * 0.71); 
 
             canvasContainer.style.display = 'block';
-            
-            // Scroll down slightly so mobile users see the preview
             canvasContainer.scrollIntoView({ behavior: "smooth" });
         }
 
         // --- EVENT LISTENERS ---
 
-        // Preview Button
         document.getElementById('previewBtn').addEventListener('click', () => {
             logActivity('Preview'); 
             drawImageAndText();     
         });
 
-        // Download Button
         document.getElementById('downloadBtn').addEventListener('click', () => {
             logActivity('Download'); 
             drawImageAndText();      
             
             const link = document.createElement('a');
-            link.download = 'KIET_Eid_Greeting.jpg';
+            link.download = 'KIET_Eid_ul_Adha_Greeting.jpg';
             link.href = canvas.toDataURL('image/jpeg', 0.95);
             link.click();
         });
+
+        shareBtn.addEventListener('click', async () => {
+            logActivity('Share');
+            drawImageAndText(); 
+            
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], 'KIET_Eid_Greeting.jpg', { type: 'image/jpeg' });
+                try {
+                    await navigator.share({
+                        title: 'Eid Mubarak from KIET',
+                        files: [file]
+                    });
+                } catch (err) {
+                    console.log("Share failed:", err);
+                }
+            }, 'image/jpeg', 0.95);
+        });
     </script>
 </body>
-  </html>
-  
+</html>
