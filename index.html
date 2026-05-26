@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIET Eid ul Adha Greeting Generator</title>
+    <style>
+        :root {
+            --kiet-blue: #003366;
+            --kiet-cyan: #00AEEF;
+            --kiet-orange: #F58220;
+            --kiet-golden: #dca654;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            color: var(--kiet-blue);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 15px;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 51, 102, 0.1);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            border-top: 5px solid var(--kiet-golden);
+        }
+        h2 {
+            color: var(--kiet-blue);
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--kiet-blue);
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--kiet-golden);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        #previewBtn { background-color: var(--kiet-blue); }
+        #previewBtn:hover { background-color: #002244; }
+        
+        #downloadBtn { background-color: var(--kiet-orange); }
+        #downloadBtn:hover { background-color: #e06d10; }
+        
+        #shareBtn { background-color: #25D366; display: none; } 
+        #shareBtn:hover { background-color: #1ebc5a; }
+
+        .canvas-container {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 450px;
+            display: none;
+        }
+        canvas {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Create Your Eid ul Adha Card</h2>
+        
+        <div class="form-group">
+            <label for="empName">Full Name</label>
+            <input type="text" id="empName" placeholder="e.g. Nasir Hussain">
+        </div>
+        
+        <div class="form-group">
+            <label for="empMessage">Designation / Custom Message</label>
+            <textarea id="empMessage" rows="3" placeholder="e.g. Assistant Registrar, KIET&#10;Or write a beautiful Eid message with emojis ✨"></textarea>
+        </div>
+
+        <div class="button-group">
+            <button id="previewBtn">Preview</button>
+            <button id="downloadBtn">Download</button>
+            <button id="shareBtn">Share</button>
+        </div>
+    </div>
+
+    <div class="canvas-container" id="canvasContainer">
+        <canvas id="eidCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('eidCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const shareBtn = document.getElementById('shareBtn');
+        const img = new Image();
+        
+        // Single master template for the staff
+        img.src = 'template.jpg'; 
+
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+        };
+
+        const sheetURL = "https://script.google.com/macros/s/AKfycbzYuV_MjqYnIrvqWkV1MUubEQIR0R2CREwUXE8YMD3BWIPiSpg6w4gTKkXwugVysZGs/exec"; 
+
+        function logActivity(actionType) {
+            const name = document.getElementById('empName').value.trim() || 'Empty';
+            const message = document.getElementById('empMessage').value.trim() || 'Empty';
+            
+            const trackingLink = `${sheetURL}?name=${encodeURIComponent(name)}&designation=${encodeURIComponent(message)}&action=${actionType}`;
+            fetch(trackingLink, { mode: 'no-cors' }).catch(err => console.log("Logging error:", err));
+        }
+
+        if (navigator.canShare && navigator.canShare({ files: [] })) {
+            shareBtn.style.display = 'block';
+        }
+
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            const paragraphs = text.split('\n');
+            let currentY = y;
+
+            for (let i = 0; i < paragraphs.length; i++) {
+                const words = paragraphs[i].split(' ');
+                let line = '';
+
+                for (let n = 0; n < words.length; n++) {
+                    const testLine = line + words[n] + ' ';
+                    const metrics = context.measureText(testLine);
+                    const testWidth = metrics.width;
+                    
+                    if (testWidth > maxWidth && n > 0) {
+                        context.fillText(line, x, currentY);
+                        line = words[n] + ' ';
+                        currentY += lineHeight;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                context.fillText(line, x, currentY);
+                currentY += lineHeight; 
+            }
+        }
+
+        function drawImageAndText() {
+            if (!img.complete || img.naturalWidth === 0) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+
+            const name = document.getElementById('empName').value.trim() || 'Your Name';
+            const message = document.getElementById('empMessage').value.trim() || 'Your Designation / Message';
+
+            ctx.fillStyle = '#dca654'; 
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // 1. Draw Name
+            let nameFontSize = 52;
+            ctx.font = `${nameFontSize}px "Georgia", "Times New Roman", serif`;
+            while (ctx.measureText(name).width > canvas.width - 80 && nameFontSize > 25) {
+                nameFontSize--;
+                ctx.font = `${nameFontSize}px "Georgia", "Times New Roman", serif`;
+            }
+            ctx.fillText(name, canvas.width / 2, canvas.height * 0.67); 
+
+            // 2. Draw Message/Designation (with wrapping)
+            const messageFontSize = 32; 
+            ctx.font = `${messageFontSize}px "Georgia", "Times New Roman", serif`; 
+            
+            wrapText(
+                ctx, 
+                message, 
+                canvas.width / 2, 
+                canvas.height * 0.72, 
+                canvas.width - 120,   
+                45                    
+            );
+
+            canvasContainer.style.display = 'block';
+            canvasContainer.scrollIntoView({ behavior: "smooth" });
+        }
+
+        document.getElementById('previewBtn').addEventListener('click', () => {
+            logActivity('Preview'); 
+            drawImageAndText();     
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            logActivity('Download'); 
+            drawImageAndText();      
+            
+            const link = document.createElement('a');
+            link.download = 'KIET_Eid_Greeting.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+        });
+
+        shareBtn.addEventListener('click', async () => {
+            logActivity('Share');
+            drawImageAndText(); 
+            
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], 'KIET_Eid_Greeting.jpg', { type: 'image/jpeg' });
+                try {
+                    await navigator.share({
+                        title: 'Eid Mubarak from KIET',
+                        files: [file]
+                    });
+                } catch (err) {
+                    console.log("Share failed:", err);
+                }
+            }, 'image/jpeg', 0.95);
+        });
+    </script>
+</body>
+</html>
+
