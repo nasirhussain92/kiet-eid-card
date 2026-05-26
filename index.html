@@ -48,7 +48,7 @@
             font-size: 14px;
             color: var(--kiet-blue);
         }
-        input[type="text"] {
+        input[type="text"], textarea, select {
             width: 100%;
             padding: 12px 15px;
             border: 2px solid #e1e8ed;
@@ -56,8 +56,13 @@
             box-sizing: border-box;
             font-size: 16px;
             transition: border-color 0.3s ease;
+            font-family: inherit;
         }
-        input[type="text"]:focus {
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        input[type="text"]:focus, textarea:focus, select:focus {
             outline: none;
             border-color: var(--kiet-golden);
         }
@@ -83,7 +88,7 @@
         #downloadBtn { background-color: var(--kiet-orange); }
         #downloadBtn:hover { background-color: #e06d10; }
         
-        #shareBtn { background-color: #25D366; display: none; } /* Hidden by default, shown if supported */
+        #shareBtn { background-color: #25D366; display: none; } 
         #shareBtn:hover { background-color: #1ebc5a; }
 
         .canvas-container {
@@ -104,15 +109,23 @@
 
     <div class="container">
         <h2>Create Your Eid ul Adha Card</h2>
-        
+
         <div class="form-group">
+            <label for="templateSelect">Select Template</label>
+            <select id="templateSelect">
+                <option value="template1.jpg">Template 1 (Add Name & Message)</option>
+                <option value="template2.jpg">Template 2 (Pre-printed Name, Custom Message)</option>
+            </select>
+        </div>
+        
+        <div class="form-group" id="nameGroup">
             <label for="empName">Full Name</label>
-            <input type="text" id="empName" placeholder="e.g. Nasir Hussain">
+            <input type="text" id="empName" placeholder="e.g. Muhammad Nasir Butt">
         </div>
         
         <div class="form-group">
-            <label for="empDesignation">Designation</label>
-            <input type="text" id="empDesignation" placeholder="e.g. Assistant Registrar, KIET">
+            <label for="empMessage">Custom Message / Designation</label>
+            <textarea id="empMessage" rows="3" placeholder="Write your beautiful Eid message with emojis ✨"></textarea>
         </div>
 
         <div class="button-group">
@@ -131,30 +144,75 @@
         const ctx = canvas.getContext('2d');
         const canvasContainer = document.getElementById('canvasContainer');
         const shareBtn = document.getElementById('shareBtn');
+        const templateSelect = document.getElementById('templateSelect');
+        const nameGroup = document.getElementById('nameGroup');
         const img = new Image();
         
-        // Load the new blank Eid ul Adha template
-        img.src = 'template.jpg'; 
+        // Initial image load
+        img.src = templateSelect.value; 
 
         img.onload = () => {
             canvas.width = img.width;
             canvas.height = img.height;
+            // Agar image change hone par canvas already open hai toh auto-redraw kardo
+            if (canvasContainer.style.display === 'block') {
+                drawImageAndText();
+            }
         };
 
-        // --- GOOGLE SHEETS LOGGING SETUP ---
+        // Jab user dropdown se template change kare
+        templateSelect.addEventListener('change', (e) => {
+            img.src = e.target.value; // Image update hogi
+            
+            // Agar Template 2 select kiya hai toh Name field chupaa do
+            if (e.target.value === 'template2.jpg') {
+                nameGroup.style.display = 'none';
+            } else {
+                nameGroup.style.display = 'block';
+            }
+        });
+
         const sheetURL = "https://script.google.com/macros/s/AKfycbzYuV_MjqYnIrvqWkV1MUubEQIR0R2CREwUXE8YMD3BWIPiSpg6w4gTKkXwugVysZGs/exec"; 
 
         function logActivity(actionType) {
-            const name = document.getElementById('empName').value.trim() || 'Empty';
-            const designation = document.getElementById('empDesignation').value.trim() || 'Empty';
+            const isTemplate2 = templateSelect.value === 'template2.jpg';
+            const name = isTemplate2 ? "Pre-printed Name" : (document.getElementById('empName').value.trim() || 'Empty');
+            const message = document.getElementById('empMessage').value.trim() || 'Empty';
+            const templateUsed = isTemplate2 ? 'Template 2' : 'Template 1';
             
-            const trackingLink = `${sheetURL}?name=${encodeURIComponent(name)}&designation=${encodeURIComponent(designation)}&action=${actionType}`;
+            // Ab hum template ka naam bhi log kar rahe hain (Action ke sath)
+            const trackingLink = `${sheetURL}?name=${encodeURIComponent(name)}&designation=${encodeURIComponent(message)}&action=${encodeURIComponent(actionType + ' - ' + templateUsed)}`;
             fetch(trackingLink, { mode: 'no-cors' }).catch(err => console.log("Logging error:", err));
         }
 
-        // Show Share button only if the user's browser/device supports it
         if (navigator.canShare && navigator.canShare({ files: [] })) {
             shareBtn.style.display = 'block';
+        }
+
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            const paragraphs = text.split('\n');
+            let currentY = y;
+
+            for (let i = 0; i < paragraphs.length; i++) {
+                const words = paragraphs[i].split(' ');
+                let line = '';
+
+                for (let n = 0; n < words.length; n++) {
+                    const testLine = line + words[n] + ' ';
+                    const metrics = context.measureText(testLine);
+                    const testWidth = metrics.width;
+                    
+                    if (testWidth > maxWidth && n > 0) {
+                        context.fillText(line, x, currentY);
+                        line = words[n] + ' ';
+                        currentY += lineHeight;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                context.fillText(line, x, currentY);
+                currentY += lineHeight; 
+            }
         }
 
         function drawImageAndText() {
@@ -163,39 +221,44 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0);
 
-            const name = document.getElementById('empName').value.trim() || 'Your Name';
-            const designation = document.getElementById('empDesignation').value.trim() || 'Your Designation';
+            const isTemplate2 = templateSelect.value === 'template2.jpg';
+            const message = document.getElementById('empMessage').value.trim() || 'Your Message';
 
-            // Golden color to match the design
             ctx.fillStyle = '#dca654'; 
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            // Elegant Serif Font for Name
-            let nameFontSize = 52;
-            ctx.font = `${nameFontSize}px "Georgia", "Times New Roman", serif`;
-            while (ctx.measureText(name).width > canvas.width - 80 && nameFontSize > 25) {
-                nameFontSize--;
+            // 1. Draw Name ONLY IF Template 1 is selected
+            if (!isTemplate2) {
+                const name = document.getElementById('empName').value.trim() || 'Your Name';
+                let nameFontSize = 52;
                 ctx.font = `${nameFontSize}px "Georgia", "Times New Roman", serif`;
+                while (ctx.measureText(name).width > canvas.width - 80 && nameFontSize > 25) {
+                    nameFontSize--;
+                    ctx.font = `${nameFontSize}px "Georgia", "Times New Roman", serif`;
+                }
+                ctx.fillText(name, canvas.width / 2, canvas.height * 0.67); 
             }
-            // Positioned higher up to match the Chancellor sample
-            ctx.fillText(name, canvas.width / 2, canvas.height * 0.67); 
 
-            // Elegant Serif Font for Designation
-            let desigFontSize = 40;
-            ctx.font = `${desigFontSize}px "Georgia", "Times New Roman", serif`; 
-            while (ctx.measureText(designation).width > canvas.width - 80 && desigFontSize > 20) {
-                desigFontSize--;
-                ctx.font = `${desigFontSize}px "Georgia", "Times New Roman", serif`;
-            }
-            // Positioned just below the name
-            ctx.fillText(designation, canvas.width / 2, canvas.height * 0.71); 
+            // 2. Draw the Message
+            const messageFontSize = 32; 
+            ctx.font = `${messageFontSize}px "Georgia", "Times New Roman", serif`; 
+            
+            // Agar template 2 hai toh message ko thora aur neechay start karo taake pehlay se likhay naam ke upper na aaye
+            let messageStartY = isTemplate2 ? canvas.height * 0.77 : canvas.height * 0.72;
+
+            wrapText(
+                ctx, 
+                message, 
+                canvas.width / 2, 
+                messageStartY, 
+                canvas.width - 120,   
+                45                    
+            );
 
             canvasContainer.style.display = 'block';
             canvasContainer.scrollIntoView({ behavior: "smooth" });
         }
-
-        // --- EVENT LISTENERS ---
 
         document.getElementById('previewBtn').addEventListener('click', () => {
             logActivity('Preview'); 
